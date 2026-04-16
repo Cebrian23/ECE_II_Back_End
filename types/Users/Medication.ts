@@ -1,5 +1,6 @@
 import { ObjectId, OptionalId } from "mongodb";
 import { User_Short } from "./User.ts";
+import { Doctor } from "./Doctor.ts";
 
 export type MedicationDB = OptionalId<{
     name: string,
@@ -9,8 +10,8 @@ export type MedicationDB = OptionalId<{
         doctor: ObjectId,
         init_date: string,
         days_duration: number,
-        amount_pills_day?: number,
-        amount_ml_day?: number,
+        amount_times_day?: number,
+        ml_time?: number,
     }[],
 }>
 
@@ -18,13 +19,18 @@ export type Medication = {
     id: string,
     name: string,
     patient: User_Short,
-    init_date: string,
-    data: object,
+    type: "Pastilla" | "Jarabe" | string,
+    info: {
+        doctor: Doctor,
+        init_date: string,
+        days_duration: number,
+        amount_times_day?: number,
+        ml_time?: number,
+    }[],
 }
 
 export type Medication_Short = {
     id: string,
     name: string,
-    init_date: string,
-    data: object,
+    info: number
 }
