@@ -1,5 +1,4 @@
 import { ObjectId, OptionalId } from "mongodb";
-import { Report_Short } from "./Report.ts";
 import { Medication_Short } from "./Medication.ts";
 import { Doctor } from "./Doctor.ts";
 
@@ -7,6 +6,7 @@ export type UserDB = OptionalId<{
     name: string,
     surname_1: string,
     surname_2?: string,
+    DNI: string,
     email: string,
     password: string,
     phone_prefix?: string,
@@ -19,6 +19,7 @@ export type User = {
     name: string,
     surname_1: string,
     surname_2?: string,
+    DNI: string,
     email: string,
     phone_prefix?: string,
     phone_number?: string,
@@ -31,5 +32,6 @@ export type User_Short = {
     name: string,
     surname_1: string,
     surname_2?: string,
+    DNI: string,
     email: string,
 }
