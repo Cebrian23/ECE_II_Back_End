@@ -1,6 +1,5 @@
 import { DoctorsCollection, MedicationsCollection } from "../../db/conection.ts";
 import { User_Short, UserDB } from "../../types/Users/User.ts";
-import { Short_Report } from "./utils_Reports.ts";
 import { Short_Medication } from "./utils_Medications.ts";
 import { Transform_Doctor } from "./utils_Doctors.ts";
 
@@ -24,6 +23,7 @@ export const Transform_User = async (user: UserDB): Promise<Response> => {
                 name: user.name,
                 surname_1: user.surname_1,
                 surname_2: user.surname_2,
+                DNI: user.DNI,
                 email: user.email,
                 password: user.password,
                 phone_prefix: user.phone_prefix,
@@ -44,6 +44,7 @@ export const Short_User = (user: UserDB): User_Short => {
         name: user.name,
         surname_1: user.surname_1,
         surname_2: user.surname_2,
+        DNI: user.DNI,
         email: user.email,
     }
 }
