@@ -1,10 +1,11 @@
 import { ObjectId } from "mongodb";
-import { AppointmentsCollection, DoctorsCollection, UsersCollection } from "./db/conection.ts";
+import { AppointmentsCollection, DoctorsCollection, MedicationsCollection, UsersCollection } from "./db/conection.ts";
 import { Validate_Email } from "./utilities/Validations/Validate_Email.ts";
 import { Validate_Phone } from "./utilities/Validations/Validate_Phone.ts";
 import { Transform_User } from "./utilities/Users/utils_Users.ts";
 import { Transform_Doctor } from "./utilities/Users/utils_Doctors.ts";
 import { Transform_Appointment } from "./utilities/Users/utils_Appointments.ts";
+import { Short_Medication, Transform_Medication } from "./utilities/Users/utils_Medications.ts";
 
 const handler = async (req: Request): Promise<Response> => {
 	const method = req.method;
@@ -12,15 +13,12 @@ const handler = async (req: Request): Promise<Response> => {
 	const pathname = url.pathname;
   	const searchParams = url.searchParams;
 
-	const path = pathname.replace(/\/+$/, ""); // quita slash final
+	const path = pathname.replace(/\/+$/, "");
 
 	const headers = new Headers();
 	headers.set("Access-Control-Allow-Origin", "*");
 	headers.set("Access-Control-Allow-Headers", "*");
 	headers.set("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS");
-	//headers.set("Access-Control-Allow-Credentials", "true");
-
-	console.log(method)
 
 	if(method === "OPTIONS"){
 		return new Response(null,{
@@ -220,6 +218,100 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
+		else if(path === "/user/medications"){
+			const id = searchParams.get("id");
+
+			if(!id){
+				return new Response(
+					JSON.stringify({error: "ID no encontrado"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const user_exists = await UsersCollection.findOne({_id: new ObjectId(id)});
+
+			if(!user_exists){
+				return new Response(
+					JSON.stringify({error: "Persona no encontrada"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const medicationsDB = await MedicationsCollection.find({patient: user_exists._id}).toArray();
+
+			const medications = medicationsDB.map((medication) => Short_Medication(medication));
+
+			return new Response(
+				JSON.stringify(medications),
+				{
+					status: 200,
+					headers: headers,
+				}
+			);
+		}
+		else if(path === "/user/medication"){
+			const id_user = searchParams.get("id_user");
+			const id_medic = searchParams.get("id_medic");
+
+			if(!id_user || !id_medic){
+				return new Response(
+					JSON.stringify({error: "ID no encontrado"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const user_exists = await UsersCollection.findOne({_id: new ObjectId(id_user)});
+
+			if(!user_exists){
+				return new Response(
+					JSON.stringify({error: "Persona no encontrada"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const medicationDB = await MedicationsCollection.findOne({_id: new ObjectId(id_medic)});
+
+			if(!medicationDB){
+				return new Response(
+					JSON.stringify({error: "Medicación no encontrada"}),
+					{
+						status: 200,
+						headers: headers,
+					}
+				);
+			}
+			else if(medicationDB.patient.toString() !== user_exists._id.toString()){
+				return new Response(
+					JSON.stringify({error: "La medicación encontrada no pertenece al paciente encontrado"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const medication_response = await Transform_Medication(medicationDB);
+
+			return new Response(
+				JSON.stringify(await medication_response.json()),
+				{
+					status: medication_response.status,
+					headers: headers,
+				}
+			);
+		}
 	}
 	else if(method === "POST"){
 		if(path === "/user"){
@@ -227,12 +319,13 @@ const handler = async (req: Request): Promise<Response> => {
 			const name: string | undefined = data.name;
 			const surname_1: string | undefined = data.surname_1;
 			const surname_2: string | undefined = data.surname_2;
+			const DNI: string | undefined = data.DNI;
 			const email: string | undefined = data.email;
 			const password: string | undefined = data.password;
 			const prefix: string | undefined = data.prefix;
 			const phone: string | undefined = data.phone;
 
-			if(!name || !surname_1 || !email || !password){
+			if(!name || !surname_1 || !DNI || !email || !password){
 				return new Response(
 					JSON.stringify({error: "Faltan datos para insertar una persona"}),
 					{
@@ -250,13 +343,25 @@ const handler = async (req: Request): Promise<Response> => {
 				surname_aux = undefined;
 			}
 
+			const users_DNI = await UsersCollection.findOne({DNI: DNI});
+
+			if(users_DNI){
+				return new Response(
+					JSON.stringify({error: `Persona con DNI ${DNI} ya existente`}),
+					{
+						status: 406,
+						headers: headers,
+					}
+				);
+			}
+
 			const users_email = await UsersCollection.findOne({email: email});
 
             if(users_email){
                 return new Response(
                     JSON.stringify({error: `Persona con email ${email} ya existente`}),
                     {
-                        status: 409,
+                        status: 406,
 						headers: headers,
                     }
                 );
@@ -316,6 +421,7 @@ const handler = async (req: Request): Promise<Response> => {
 					name: name,
 					surname_1: surname_1,
 					surname_2: surname_aux,
+					DNI: DNI,
 					email: email,
 					password: password,
 					doctors: [],
@@ -545,6 +651,58 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
+		else if(path === "/user/new_medication"){
+			const data = await req.json();
+			const id: string | undefined = data.id;
+
+			if(!id){
+				return new Response(
+					JSON.stringify({error: "ID no encontrado"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const user_exists = await UsersCollection.findOne({_id: new ObjectId(id)});
+
+			if(!user_exists){
+				return new Response(
+					JSON.stringify({error: "Persona no encontrada"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+		}
+		else if(path === "/user/medication"){
+			const data = await req.json();
+			const id: string | undefined = data.id;
+
+			if(!id){
+				return new Response(
+					JSON.stringify({error: "ID no encontrado"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const user_exists = await UsersCollection.findOne({_id: new ObjectId(id)});
+
+			if(!user_exists){
+				return new Response(
+					JSON.stringify({error: "Persona no encontrada"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+		}
 	}
 	else if(method === "PUT"){
 		if(path === "/user"){
@@ -553,7 +711,6 @@ const handler = async (req: Request): Promise<Response> => {
 			const name: string | undefined = data.name;
 			const surname_1: string | undefined = data.surname_1;
 			const surname_2: string | undefined = data.surname_2;
-			const email: string | undefined = data.email;
 			const password: string | undefined = data.password;
 			const prefix: string | undefined = data.phone_prefix;
 			const phone: string | undefined = data.phone_number;
@@ -568,7 +725,7 @@ const handler = async (req: Request): Promise<Response> => {
 				);
 			}
 
-			if(!name && !surname_1 && !surname_2 && !email && !prefix && !phone){
+			if(!name && !surname_1 && !surname_2 && !prefix && !phone){
 				return new Response(
 					JSON.stringify({error: "Faltan datos para actualizar"}),
 					{
@@ -577,33 +734,6 @@ const handler = async (req: Request): Promise<Response> => {
 					}
 				);
 			}
-
-			if(email){
-                const data = await Validate_Email(email);
-
-                if(data.status !== 200){
-                    return new Response(
-                        JSON.stringify(await data.json()),
-                        {
-                            status: data.status,
-							headers: headers,
-                        }
-                    );
-                }
-				else{
-					const email_error = await UsersCollection.findOne({email: email});
-
-					if(email_error && email_error._id.toString() !== id){
-						return new Response(
-							JSON.stringify({error: `Email ${email} pertenece a otra persona`}),
-							{
-								status: 409,
-								headers: headers,
-							}
-						);
-					}
-				}
-            }
             
 			if(prefix && phone){
                 const data = await Validate_Phone(prefix, phone);
@@ -654,7 +784,6 @@ const handler = async (req: Request): Promise<Response> => {
 							name: name,
 							surname_1: surname_1,
 							surname_2: surname_2,
-							email: email,
 							password: pass,
 							phone_prefix: prefix,
 							phone_number: phone,
@@ -688,7 +817,6 @@ const handler = async (req: Request): Promise<Response> => {
                         name: name,
                         surname_1: surname_1,
                         surname_2: surname_2,
-                        email: email,
 						password: password,
                         phone_prefix: prefix,
                         phone_number: phone,
