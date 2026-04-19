@@ -6,6 +6,7 @@ import { Transform_User } from "./utilities/Users/utils_Users.ts";
 import { Transform_Doctor } from "./utilities/Users/utils_Doctors.ts";
 import { Transform_Appointment } from "./utilities/Users/utils_Appointments.ts";
 import { Short_Medication, Transform_Medication } from "./utilities/Users/utils_Medications.ts";
+import { Med_infoDB } from "./types/Users/Medication.ts";
 
 const handler = async (req: Request): Promise<Response> => {
 	const method = req.method;
@@ -684,7 +685,86 @@ const handler = async (req: Request): Promise<Response> => {
 				);
 			}
 
-			//
+			if(!name || !type || !doctor || !init_date || !days_duration || !amount_times_day){
+				return new Response(
+					JSON.stringify({error: "Falta algún dato"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const { insertedId } = await MedicationsCollection.insertOne(
+				{
+					name: name,
+					patient: user_exists._id,
+					type: type,
+					info: [],
+				}
+			);
+
+			const doctor_exists = await DoctorsCollection.findOne({_id: new ObjectId(doctor)});
+
+			if(!doctor_exists){
+				return new Response(
+					JSON.stringify({error: "Doctor no encontrado"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const info_object: Med_infoDB = {
+				doctor: new ObjectId(doctor),
+				init_date: init_date,
+				days_duration: days_duration,
+				amount_times_day: amount_times_day,
+			}
+
+			if(ml_time){
+				info_object.ml_time = ml_time;
+			}
+
+			const med_exists = await MedicationsCollection.findOne({_id: insertedId});
+
+			if(!med_exists){
+				return new Response(
+					JSON.stringify({error: "Medicamento no encontrado"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			med_exists.info.push(info_object);
+
+			const { modifiedCount } = await MedicationsCollection.updateOne(
+				{_id: med_exists._id},
+				{$set: {
+					info: med_exists.info,
+				}}
+			);
+
+			if(modifiedCount === 0){
+				return new Response(
+					JSON.stringify({error: "No se ha podido actualizar la lista de medicamentos"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			return new Response(
+				JSON.stringify({error: "Medicamento insertado exitosamente"}),
+				{
+					status: 200,
+					headers: headers,
+				}
+			);
 		}
 		else if(path === "/user/medication"){
 			const data = await req.json();
@@ -695,7 +775,8 @@ const handler = async (req: Request): Promise<Response> => {
 			const days_duration: number | undefined = data.days_duration;
 			const amount_times_day: number | undefined = data.amount_times_day;
 			const ml_time: number | undefined = data.ml_time;
-			
+
+			console.log(name);
 
 			if(!id_user || !id_medicine){
 				return new Response(
@@ -731,7 +812,65 @@ const handler = async (req: Request): Promise<Response> => {
 				);
 			}
 
-			//
+			if(!doctor || !init_date || !days_duration || !amount_times_day){
+				return new Response(
+					JSON.stringify({error: "Falta algún dato"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const doctor_exists = await DoctorsCollection.findOne({_id: new ObjectId(doctor)});
+
+			if(!doctor_exists){
+				return new Response(
+					JSON.stringify({error: "Doctor no encontrado"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const info_object: Med_infoDB = {
+				doctor: new ObjectId(doctor),
+				init_date: init_date,
+				days_duration: days_duration,
+				amount_times_day: amount_times_day,
+			}
+
+			if(ml_time){
+				info_object.ml_time = ml_time;
+			}
+
+			medicine_exists.info.push(info_object);
+
+			const { modifiedCount } = await MedicationsCollection.updateOne(
+				{_id: medicine_exists._id},
+				{$set: {
+					info: medicine_exists.info,
+				}}
+			);
+
+			if(modifiedCount === 0){
+				return new Response(
+					JSON.stringify({error: "No se ha podido actualizar la lista de medicamentos"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			return new Response(
+				JSON.stringify({error: "Medicamento insertado exitosamente"}),
+				{
+					status: 200,
+					headers: headers,
+				}
+			);
 		}
 	}
 	else if(method === "PUT"){
