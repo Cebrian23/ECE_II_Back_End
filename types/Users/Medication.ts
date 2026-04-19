@@ -5,7 +5,7 @@ import { Doctor } from "./Doctor.ts";
 export type MedicationDB = OptionalId<{
     name: string,
     patient: ObjectId,
-    type: "Pastilla" | "Jarabe" | string,
+    type: "Pastillas" | "Jarabe" | string,
     info: Med_infoDB[],
 }>
 
@@ -13,7 +13,7 @@ export type Medication = {
     id: string,
     name: string,
     patient: User_Short,
-    type: "Pastilla" | "Jarabe" | string,
+    type: "Pastillas" | "Jarabe" | string,
     info: Med_info[],
 }
 
