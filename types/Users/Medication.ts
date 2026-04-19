@@ -20,7 +20,8 @@ export type Medication = {
 export type Medication_Short = {
     id: string,
     name: string,
-    info: number
+    type: string,
+    info: number,
 }
 
 export type Med_infoDB = {
