@@ -654,7 +654,6 @@ const handler = async (req: Request): Promise<Response> => {
 		}
 		else if(path === "/user/new_medication"){
 			const data = await req.json();
-			console.log(data);
 			const id: string | undefined = data.id;
 			const name: string | undefined = data.name;
 			const type: string | undefined = data.type;
@@ -777,8 +776,6 @@ const handler = async (req: Request): Promise<Response> => {
 			const amount_times_day: number | undefined = data.amount_times_day;
 			const ml_time: number | undefined = data.ml_time;
 
-			console.log(name);
-
 			if(!id_user || !id_medicine){
 				return new Response(
 					JSON.stringify({error: "IDs no encontrados"}),
@@ -866,7 +863,7 @@ const handler = async (req: Request): Promise<Response> => {
 			}
 
 			return new Response(
-				JSON.stringify({error: "Medicamento insertado exitosamente"}),
+				JSON.stringify({message: "Medicamento insertado exitosamente"}),
 				{
 					status: 200,
 					headers: headers,
