@@ -115,6 +115,7 @@ export const Short_Medication = (medication: MedicationDB): Medication_Short => 
     return{
         id: medication._id!.toString(),
         name: medication.name,
+        type: medication.type,
         info: medication.info.length,
     }
 }
