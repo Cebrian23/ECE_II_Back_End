@@ -36,7 +36,7 @@ export const Transform_Medication = async (medication: MedicationDB): Promise<Re
             );
         }
         
-        if(medication.type === "Pastilla"){
+        if(medication.type === "Pastillas"){
             const data = {
                 doctor: Transform_Doctor(doctor_exists),
                 init_date: information.init_date,
