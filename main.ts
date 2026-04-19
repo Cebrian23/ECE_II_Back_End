@@ -654,6 +654,13 @@ const handler = async (req: Request): Promise<Response> => {
 		else if(path === "/user/new_medication"){
 			const data = await req.json();
 			const id: string | undefined = data.id;
+			const name: string | undefined = data.name;
+			const type: string | undefined = data.type;
+			const doctor: string | undefined = data.doctor;
+			const init_date: string | undefined = data.init_date;
+			const days_duration: number | undefined = data.days_duration;
+			const amount_times_day: number | undefined = data.amount_times_day;
+			const ml_time: number | undefined = data.ml_time;
 
 			if(!id){
 				return new Response(
@@ -676,14 +683,23 @@ const handler = async (req: Request): Promise<Response> => {
 					}
 				);
 			}
+
+			//
 		}
 		else if(path === "/user/medication"){
 			const data = await req.json();
-			const id: string | undefined = data.id;
+			const id_user: string | undefined = data.id_user;
+			const id_medicine: string | undefined = data.id_medicine;
+			const doctor: string | undefined = data.doctor;
+			const init_date: string | undefined = data.init_date;
+			const days_duration: number | undefined = data.days_duration;
+			const amount_times_day: number | undefined = data.amount_times_day;
+			const ml_time: number | undefined = data.ml_time;
+			
 
-			if(!id){
+			if(!id_user || !id_medicine){
 				return new Response(
-					JSON.stringify({error: "ID no encontrado"}),
+					JSON.stringify({error: "IDs no encontrados"}),
 					{
 						status: 400,
 						headers: headers,
@@ -691,7 +707,7 @@ const handler = async (req: Request): Promise<Response> => {
 				);
 			}
 
-			const user_exists = await UsersCollection.findOne({_id: new ObjectId(id)});
+			const user_exists = await UsersCollection.findOne({_id: new ObjectId(id_user)});
 
 			if(!user_exists){
 				return new Response(
@@ -702,6 +718,20 @@ const handler = async (req: Request): Promise<Response> => {
 					}
 				);
 			}
+
+			const medicine_exists = await MedicationsCollection.findOne({_id: new ObjectId(id_medicine), patient: new ObjectId(id_user)});
+
+			if(!medicine_exists){
+				return new Response(
+					JSON.stringify({error: "Medicamento no encontrado"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			//
 		}
 	}
 	else if(method === "PUT"){
