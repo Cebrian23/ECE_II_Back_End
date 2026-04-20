@@ -3,6 +3,7 @@ import { UserDB } from "../types/Users/User.ts";
 import { MedicationDB } from "../types/Users/Medication.ts";
 import { DoctorDB } from "../types/Users/Doctor.ts";
 import { AppointmentDB } from "../types/Users/Appointment.ts";
+import { BloodTestDB } from "../types/Users/BloodTest.ts";
 
 const MONGO_URL = Deno.env.get("MONGO_URL");
 
@@ -20,3 +21,4 @@ export const UsersCollection = db.collection<UserDB>("Users");
 export const MedicationsCollection = db.collection<MedicationDB>("Medication");
 export const DoctorsCollection = db.collection<DoctorDB>("Doctors");
 export const AppointmentsCollection = db.collection<AppointmentDB>("Appointments");
+export const BloodTestsCollection = db.collection<BloodTestDB>("BloodTests");
