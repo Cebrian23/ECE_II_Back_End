@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { AppointmentsCollection, DoctorsCollection, MedicationsCollection, UsersCollection } from "./db/conection.ts";
+import { AppointmentsCollection, BloodTestsCollection, DoctorsCollection, MedicationsCollection, UsersCollection } from "./db/conection.ts";
 import { Validate_Email } from "./utilities/Validations/Validate_Email.ts";
 import { Validate_Phone } from "./utilities/Validations/Validate_Phone.ts";
 import { Transform_User } from "./utilities/Users/utils_Users.ts";
@@ -7,6 +7,9 @@ import { Transform_Doctor } from "./utilities/Users/utils_Doctors.ts";
 import { Transform_Appointment } from "./utilities/Users/utils_Appointments.ts";
 import { Short_Medication, Transform_Medication } from "./utilities/Users/utils_Medications.ts";
 import { Med_infoDB } from "./types/Users/Medication.ts";
+import { Table_user_data, Table_analysis } from "./types/Users/Table.ts";
+import { BloodTest_Date, Transform_BloodTest } from "./utilities/Users/utils_BloodTest.ts";
+import { BloodTest } from "./types/Users/BloodTest.ts";
 
 const handler = async (req: Request): Promise<Response> => {
 	const method = req.method;
@@ -309,6 +312,62 @@ const handler = async (req: Request): Promise<Response> => {
 				JSON.stringify(await medication_response.json()),
 				{
 					status: medication_response.status,
+					headers: headers,
+				}
+			);
+		}
+		else if(path === "/user/analysis"){
+			const id = searchParams.get("id");
+
+			if(!id){
+				return new Response(
+					JSON.stringify({error: "ID no encontrado"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const user_exists = await UsersCollection.findOne({_id: new ObjectId(id)});
+
+			if(!user_exists){
+				return new Response(
+					JSON.stringify({error: "Persona no encontrada"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const analysisDB = await BloodTestsCollection.find({user: user_exists._id}).toArray();
+
+			const analysis_response = await Promise.all(analysisDB.map(async (analysis) => await Transform_BloodTest(analysis)));
+			
+			const all_analysis: BloodTest[] = [];
+			const analysis_error = analysis_response.find(async (analysis) => {
+				if(analysis.status !== 200){
+					return analysis;
+				}
+
+				all_analysis.push(await analysis.json());
+			});
+
+			if(analysis_error !== undefined){
+				return new Response(
+					JSON.stringify(await analysis_error.json()),
+					{
+						status: analysis_error.status,
+						headers: headers,
+					}
+				);
+			}
+
+			return new Response(
+				JSON.stringify(all_analysis),
+				{
+					status: 200,
 					headers: headers,
 				}
 			);
@@ -864,6 +923,95 @@ const handler = async (req: Request): Promise<Response> => {
 
 			return new Response(
 				JSON.stringify({message: "Medicamento insertado exitosamente"}),
+				{
+					status: 200,
+					headers: headers,
+				}
+			);
+		}
+		else if(path === "/user/tablas"){
+			const data = await req.json();
+			console.log(data);
+			const tables: (Table_user_data | Table_analysis)[] | undefined = data.tables;
+			const DNI: string | undefined = data.DNI;
+
+			if(!tables || !DNI){
+				return new Response(
+					JSON.stringify({error: "Falta algún dato"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const user_exists = await UsersCollection.findOne({DNI: DNI});
+
+			if(!user_exists){
+				JSON.stringify({error: "Paciente no encontrado"}),
+				{
+					status: 404,
+					headers: headers,
+				}
+			}
+
+			const user_data = tables.find((table) => {
+				if(table.type === "User_data"){
+					return table;
+				}
+			});
+
+			if(user_data === undefined || user_data.type === "Analysis"){
+				return new Response(
+					JSON.stringify({error: "No se han encontrado los datos personales"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			if(user_data.dni.toUpperCase() !== DNI){
+				return new Response(
+					JSON.stringify({error: "DNI del usuario y el de la analítica no coincide"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const today_date = new Date();
+			const analysis_date_transform = BloodTest_Date(user_data.fecha);
+			const analysis_date = new Date(analysis_date_transform);
+
+			if(today_date < analysis_date){
+				return new Response(
+					JSON.stringify({error: "La fecha de la analítica es superior a la de hoy"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const tables_analysis: Table_analysis[] = [];
+			tables.forEach((table) => {
+				if(table.type === "Analysis"){
+					tables_analysis.push(table);
+				}
+			});
+
+			const { insertedId } = await BloodTestsCollection.insertOne(
+				{
+					user: user_exists!._id,
+					date: user_data.fecha,
+					tables: tables_analysis,
+				}
+			);
+
+			return new Response(
+				JSON.stringify({message: "Análisis existosamente insertado"}),
 				{
 					status: 200,
 					headers: headers,
