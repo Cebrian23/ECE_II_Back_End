@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb";
+import { ObjectId } from "npm:mongodb";
 import { AppointmentsCollection, BloodTestsCollection, DoctorsCollection, MedicationsCollection, UsersCollection } from "./db/conection.ts";
 import { Validate_Email } from "./utilities/Validations/Validate_Email.ts";
 import { Validate_Phone } from "./utilities/Validations/Validate_Phone.ts";
@@ -1168,4 +1168,11 @@ const handler = async (req: Request): Promise<Response> => {
 	);
 };
 
-Deno.serve({ port: 4000 }, handler);
+
+Deno.serve(
+	{
+		port: Number(Deno.env.get("PORT")) || 4000,
+		hostname: "0.0.0.0",
+	},
+	handler
+);
