@@ -1,4 +1,4 @@
-import { ObjectId, OptionalId } from "mongodb";
+import { ObjectId, OptionalId } from "npm:mongodb";
 import { Medication_Short } from "./Medication.ts";
 import { Doctor } from "./Doctor.ts";
 

@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb";
+import { ObjectId } from "npm:mongodb";
 import { DoctorsCollection, UsersCollection } from "../../db/conection.ts";
 import { AppointmentDB } from "../../types/Users/Appointment.ts";
 import { Short_User } from "./utils_Users.ts";

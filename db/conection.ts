@@ -1,4 +1,4 @@
-import { MongoClient } from "mongodb";
+import { MongoClient } from "npm:mongodb";
 import { UserDB } from "../types/Users/User.ts";
 import { MedicationDB } from "../types/Users/Medication.ts";
 import { DoctorDB } from "../types/Users/Doctor.ts";

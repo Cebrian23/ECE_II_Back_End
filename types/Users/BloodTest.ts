@@ -1,4 +1,4 @@
-import { ObjectId, OptionalId } from "mongodb";
+import { ObjectId, OptionalId } from "npm:mongodb";
 import { User_Short } from "./User.ts";
 import { Table_analysis } from "./Table.ts";
 
