@@ -1,6 +1,7 @@
-import { UsersCollection } from "../../db/conection.ts";
+import { DoctorsCollection, UsersCollection } from "../../db/conection.ts";
 import { BloodTestDB } from "../../types/Users/BloodTest.ts";
 import { Short_User } from "./utils_Users.ts";
+import { Transform_Doctor } from "./utils_Doctors.ts";
 
 export const Transform_BloodTest = async (test: BloodTestDB): Promise<Response> => {
     const user_exists = await UsersCollection.findOne({_id: test.user});
@@ -14,11 +15,23 @@ export const Transform_BloodTest = async (test: BloodTestDB): Promise<Response> 
         );
     }
 
+    const doctor_exists = await DoctorsCollection.findOne({_id: test.doctor});
+    
+    if(!doctor_exists){
+        return new Response(
+            JSON.stringify({error: "Doctor no encontrado"}),
+            {
+                status: 404,
+            }
+        );
+    }
+
     return new Response(
         JSON.stringify(
             {
                 id: test._id!.toString(),
                 user: Short_User(user_exists),
+                doctor: Transform_Doctor(doctor_exists),
                 date: test.date,
                 tables: test.tables,
             }
