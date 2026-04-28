@@ -1,11 +1,11 @@
 import { ObjectId, OptionalId } from "npm:mongodb";
 import { User_Short } from "./User.ts";
 import { Table_analysis } from "./Table.ts";
-import { Doctor, DoctorDB } from "./Doctor.ts";
+import { Doctor } from "./Doctor.ts";
 
 export type BloodTestDB = OptionalId<{
     user: ObjectId,
-    doctor: DoctorDB,
+    doctor: ObjectId,
     date: string,
     tables: Table_analysis[],
 }>
