@@ -316,7 +316,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/analysis"){
+		else if(path === "/user/all_analysis"){
 			const id = searchParams.get("id");
 
 			if(!id){
@@ -345,13 +345,10 @@ const handler = async (req: Request): Promise<Response> => {
 
 			const analysis_response = await Promise.all(analysisDB.map(async (analysis) => await Transform_BloodTest(analysis)));
 			
-			const all_analysis: BloodTest[] = [];
-			const analysis_error = analysis_response.find(async (analysis) => {
+			const analysis_error = analysis_response.find((analysis) => {
 				if(analysis.status !== 200){
 					return analysis;
 				}
-
-				all_analysis.push(await analysis.json());
 			});
 
 			if(analysis_error !== undefined){
@@ -364,6 +361,8 @@ const handler = async (req: Request): Promise<Response> => {
 				);
 			}
 
+			const all_analysis: BloodTest[] = await Promise.all(analysis_response.map(async (analysis) => await analysis.json()));
+
 			return new Response(
 				JSON.stringify(all_analysis),
 				{
@@ -372,6 +371,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
+		else if(path === "/user/single_analysis"){}
 		else if(path === "/user/table_analysis"){
 			const id = searchParams.get("id");
 			const table_name = searchParams.get("table");
@@ -1018,7 +1018,6 @@ const handler = async (req: Request): Promise<Response> => {
 		}
 		else if(path === "/user/analysis"){
 			const data = await req.json();
-			console.log(data)
 			const doctor: string | undefined = data.doctor;
 			const tables: (Table_user_data | Table_analysis)[] | undefined = data.tables;
 			const DNI: string | undefined = data.DNI;
@@ -1061,7 +1060,22 @@ const handler = async (req: Request): Promise<Response> => {
 
 			if(user_data.dni.toUpperCase() !== DNI){
 				return new Response(
-					JSON.stringify({error: "DNI del usuario y el de la analítica no coincide"}),
+					JSON.stringify({error: "El DNI del usuario y el de la analítica no coincide"}),
+					{
+						status: 406,
+						headers: headers,
+					}
+				);
+			}
+
+			let name_aux = user_exists!.name + " " + user_exists!.surname_1;
+			if(user_exists!.surname_2 !== null && user_exists!.surname_2 !== undefined && user_exists!.surname_2.trim() !== ""){
+				name_aux += user_exists!.surname_2;
+			}
+
+			if(user_data.nombre_completo !== name_aux){
+				return new Response(
+					JSON.stringify({error: "El nombre del usuario y el de la analítica no coincide"}),
 					{
 						status: 406,
 						headers: headers,
