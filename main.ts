@@ -371,7 +371,74 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/single_analysis"){}
+		else if(path === "/user/single_analysis"){
+			const id_user = searchParams.get("id_user");
+			const id_analysis = searchParams.get("id_analysis");
+
+			if(!id_user || !id_analysis){
+				return new Response(
+					JSON.stringify({error: "Faltan datos"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const user_exists = await UsersCollection.findOne({_id: new ObjectId(id_user)});
+
+			if(!user_exists){
+				return new Response(
+					JSON.stringify({error: "Usuario no encontrado"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const analysis_exists = await BloodTestsCollection.findOne({_id: new ObjectId(id_analysis)});
+
+			if(!analysis_exists){
+				return new Response(
+					JSON.stringify({error: "Analisis no encontrado"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			if(analysis_exists.user.id.toString() === user_exists._id.toString()){
+				return new Response(
+					JSON.stringify({error: "Analisis encontrado no pertenece al usuario encontrado"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const analysis_response = await Transform_BloodTest(analysis_exists);
+
+			if(analysis_response.status !== 200){
+				return new Response(
+					JSON.stringify(await analysis_response.json()),
+					{
+						status: analysis_response.status,
+						headers: headers,
+					}
+				);
+			}
+
+			return new Response(
+				JSON.stringify(await analysis_response.json()),
+				{
+					status: 200,
+					headers: headers,
+				}
+			);
+		}
 		else if(path === "/user/table_analysis"){
 			const id = searchParams.get("id");
 			const table_name = searchParams.get("table");
