@@ -316,7 +316,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/s"){
+		else if(path === "/user/analysis"){
 			const id = searchParams.get("id");
 
 			if(!id){
