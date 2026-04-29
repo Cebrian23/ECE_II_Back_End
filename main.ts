@@ -316,7 +316,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/analysis"){
+		else if(path === "/s"){
 			const id = searchParams.get("id");
 
 			if(!id){
@@ -371,6 +371,93 @@ const handler = async (req: Request): Promise<Response> => {
 					headers: headers,
 				}
 			);
+		}
+		else if(path === "/user/table_analysis"){
+			const id = searchParams.get("id");
+			const table_name = searchParams.get("table");
+
+			if(!id || !table_name){
+				return new Response(
+					JSON.stringify({error: "Faltan datos"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const user_exists = await UsersCollection.findOne({_id: new ObjectId(id)});
+
+			if(!user_exists){
+				return new Response(
+					JSON.stringify({error: "Usuario no encontrado"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const bloodTests = await BloodTestsCollection.find({user: new ObjectId(id)}).toArray();
+
+			const tablesTests: Table_analysis[] = [];
+
+			bloodTests.forEach((test) => {
+				test.tables.forEach((table) => {
+					if(table.table_name === table_name){
+						tablesTests.push(table);
+					}
+				});
+			});
+
+			return new Response(
+				JSON.stringify(tablesTests),
+				{
+					status: 200,
+					headers: headers,
+				}
+			);
+		}
+		else if(path === "/user/parameter_table_analysis"){
+			const id = searchParams.get("id");
+			const table_name = searchParams.get("table_name");
+			const data_name = searchParams.get("data_name");
+
+			if(!id || !table_name || !data_name){
+				return new Response(
+					JSON.stringify({error: "Faltan datos"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const user_exists = await UsersCollection.findOne({_id: new ObjectId(id)});
+
+			if(!user_exists){
+				return new Response(
+					JSON.stringify({error: "Usuario no encontrado"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const bloodTests = await BloodTestsCollection.find({user: new ObjectId(id)}).toArray();
+
+			const tablesTests: Table_analysis[] = [];
+
+			bloodTests.forEach((test) => {
+				test.tables.forEach((table) => {
+					if(table.table_name === table_name){
+						tablesTests.push(table);
+					}
+				});
+			});
+
+			//
 		}
 	}
 	else if(method === "POST"){
@@ -929,13 +1016,14 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/tablas"){
+		else if(path === "/user/analysis"){
 			const data = await req.json();
-			console.log(data);
+			console.log(data)
+			const doctor: string | undefined = data.doctor;
 			const tables: (Table_user_data | Table_analysis)[] | undefined = data.tables;
 			const DNI: string | undefined = data.DNI;
 
-			if(!tables || !DNI){
+			if(!tables || !DNI || !doctor){
 				return new Response(
 					JSON.stringify({error: "Falta algún dato"}),
 					{
@@ -975,6 +1063,18 @@ const handler = async (req: Request): Promise<Response> => {
 				return new Response(
 					JSON.stringify({error: "DNI del usuario y el de la analítica no coincide"}),
 					{
+						status: 406,
+						headers: headers,
+					}
+				);
+			}
+
+			const doctor_exists = await DoctorsCollection.findOne({_id: new ObjectId(doctor)});
+			
+			if(!doctor_exists){
+				return new Response(
+					JSON.stringify({error: "Doctor no encontrado"}),
+					{
 						status: 404,
 						headers: headers,
 					}
@@ -1005,6 +1105,7 @@ const handler = async (req: Request): Promise<Response> => {
 			const { insertedId } = await BloodTestsCollection.insertOne(
 				{
 					user: user_exists!._id,
+					doctor: doctor_exists!._id,
 					date: user_data.fecha,
 					tables: tables_analysis,
 				}
