@@ -7,9 +7,9 @@ import { Transform_Doctor } from "./utilities/Users/utils_Doctors.ts";
 import { Transform_Appointment } from "./utilities/Users/utils_Appointments.ts";
 import { Short_Medication, Transform_Medication } from "./utilities/Users/utils_Medications.ts";
 import { Med_infoDB } from "./types/Users/Medication.ts";
-import { Table_user_data, Table_analysis } from "./types/Users/Table.ts";
-import { BloodTest_Date, Transform_BloodTest } from "./utilities/Users/utils_BloodTest.ts";
-import { BloodTest } from "./types/Users/BloodTest.ts";
+import { Table_user_data, Table_analysis, Table_analysis_iterable } from "./types/Users/Table.ts";
+import { BloodTest_Date, Transform_BloodTest, Transform_Table } from "./utilities/Users/utils_BloodTest.ts";
+import { BloodTest, BloodTest_iterable } from "./types/Users/BloodTest.ts";
 
 const handler = async (req: Request): Promise<Response> => {
 	const method = req.method;
@@ -363,8 +363,18 @@ const handler = async (req: Request): Promise<Response> => {
 
 			const all_analysis: BloodTest[] = await Promise.all(analysis_response.map(async (analysis) => await analysis.json()));
 
+			const all_analysis_transform: BloodTest_iterable[] = all_analysis.map((analysis) => {
+				return{
+					id: analysis.id,
+					user: analysis.user,
+					doctor: analysis.doctor,
+					date: analysis.date,
+					tables: analysis.tables.map((table) => Transform_Table(table)),
+				}
+			});
+
 			return new Response(
-				JSON.stringify(all_analysis),
+				JSON.stringify(all_analysis_transform),
 				{
 					status: 200,
 					headers: headers,
@@ -431,8 +441,21 @@ const handler = async (req: Request): Promise<Response> => {
 				);
 			}
 
+			const analysis = await analysis_response.json();
+
+			const tables_analysis: Table_analysis_iterable = analysis.tables.map((table: Table_analysis) => Transform_Table(table));
+			console.log(tables_analysis)
+
+			const analysis_transform = {
+				id: analysis.id,
+				user: analysis.user,
+				doctor: analysis.doctor,
+				date: analysis.date,
+				tables: tables_analysis,
+			}
+
 			return new Response(
-				JSON.stringify(await analysis_response.json()),
+				JSON.stringify(analysis_transform),
 				{
 					status: 200,
 					headers: headers,
@@ -1349,7 +1372,6 @@ const handler = async (req: Request): Promise<Response> => {
 		}
 	);
 };
-
 
 Deno.serve(
 	{
