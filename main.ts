@@ -444,7 +444,6 @@ const handler = async (req: Request): Promise<Response> => {
 			const analysis = await analysis_response.json();
 
 			const tables_analysis: Table_analysis_iterable = analysis.tables.map((table: Table_analysis) => Transform_Table(table));
-			console.log(tables_analysis)
 
 			const analysis_transform = {
 				id: analysis.id,

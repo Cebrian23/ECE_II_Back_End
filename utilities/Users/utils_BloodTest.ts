@@ -44,8 +44,6 @@ export const Transform_BloodTest = async (test: BloodTestDB): Promise<Response> 
 }
 
 export const Transform_Table = (table: Table_analysis): Table_analysis_iterable => {
-    //console.log("----------------------------------------------------------------");
-    //console.log(table);
     const rows: string[][] = [];
 
     table.data.forEach((data) => {
@@ -62,8 +60,6 @@ export const Transform_Table = (table: Table_analysis): Table_analysis_iterable 
         data: rows,
         type: table.type,
     }
-
-    //console.log(table_iterable);
 
     return table_iterable
 }
