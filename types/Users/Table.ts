@@ -1,7 +1,14 @@
 export type Table_analysis = {
     table_name: string,
     indexes: string[],
-    data: string[],
+    data: Record<string, string>[],
+    type: "Analysis",
+}
+
+export type Table_analysis_iterable = {
+    table_name: string,
+    indexes: string[],
+    data: string[][],
     type: "Analysis",
 }
 
