@@ -2,6 +2,7 @@ import { DoctorsCollection, UsersCollection } from "../../db/conection.ts";
 import { BloodTestDB } from "../../types/Users/BloodTest.ts";
 import { Short_User } from "./utils_Users.ts";
 import { Transform_Doctor } from "./utils_Doctors.ts";
+import { Table_analysis, Table_analysis_iterable } from "../../types/Users/Table.ts";
 
 export const Transform_BloodTest = async (test: BloodTestDB): Promise<Response> => {
     const user_exists = await UsersCollection.findOne({_id: test.user});
@@ -40,6 +41,31 @@ export const Transform_BloodTest = async (test: BloodTestDB): Promise<Response> 
             status: 200,
         }
     );
+}
+
+export const Transform_Table = (table: Table_analysis): Table_analysis_iterable => {
+    //console.log("----------------------------------------------------------------");
+    //console.log(table);
+    const rows: string[][] = [];
+
+    table.data.forEach((data) => {
+        const row: string[] = [];
+        table.indexes.forEach((index) => {
+            row.push(data[index]);
+        });
+        rows.push(row);
+    });
+
+    const table_iterable: Table_analysis_iterable = {
+        table_name: table.table_name,
+        indexes: table.indexes,
+        data: rows,
+        type: table.type,
+    }
+
+    //console.log(table_iterable);
+
+    return table_iterable
 }
 
 export const BloodTest_Date = (date: string): string=> {
