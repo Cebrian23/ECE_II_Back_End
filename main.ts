@@ -461,6 +461,120 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
+		else if(path === "/user/table_names_analysis"){
+			const id = searchParams.get("id");
+
+			if(!id){
+				return new Response(
+					JSON.stringify({error: "Faltan datos"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const user_exists = await UsersCollection.findOne({_id: new ObjectId(id)});
+
+			if(!user_exists){
+				return new Response(
+					JSON.stringify({error: "Usuario no encontrado"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const bloodTests = await BloodTestsCollection.find({user: new ObjectId(id)}).toArray();
+
+			const names: string[] = [];
+
+			bloodTests.forEach((analysis) => {
+				analysis.tables.forEach((table) => {
+					const name_exists = names.find((name) => {
+						if(name === table.table_name){
+							return name;
+						}
+					});
+
+					if(name_exists === undefined){
+						names.push(table.table_name);
+					}
+				});
+			});
+
+			return new Response(
+				JSON.stringify(names),
+				{
+					status: 200,
+					headers: headers,
+				}
+			);
+		}
+		else if(path === "/user/table_data_names_analysis"){
+			const id = searchParams.get("id");
+			const table_name = searchParams.get("table_name");
+
+			if(!id || !table_name){
+				return new Response(
+					JSON.stringify({error: "Faltan datos"}),
+					{
+						status: 400,
+						headers: headers,
+					}
+				);
+			}
+
+			const user_exists = await UsersCollection.findOne({_id: new ObjectId(id)});
+
+			if(!user_exists){
+				return new Response(
+					JSON.stringify({error: "Usuario no encontrado"}),
+					{
+						status: 404,
+						headers: headers,
+					}
+				);
+			}
+
+			const bloodTests = await BloodTestsCollection.find({user: new ObjectId(id)}).toArray();
+
+			const tables: Table_analysis[] = [];
+			bloodTests.forEach((analysis) => {
+				analysis.tables.forEach((table) => {
+					if(table.table_name === table_name){
+						tables.push(table);
+					}
+				});
+			});
+
+			const tables_transform: Table_analysis_iterable[] = tables.map((table) => Transform_Table(table));
+
+			const rows: string[] = [];
+
+			tables_transform.forEach((table) => {
+				table.data.forEach((row) => {
+					const row_exists = rows.find((row_in) => {
+						if(row[0] === row_in){
+							return row_in;
+						}
+					});
+
+					if(row_exists === undefined){
+						rows.push(row[0]);
+					}
+				});
+			});
+
+			return new Response(
+				JSON.stringify(rows),
+				{
+					status: 200,
+					headers: headers,
+				}
+			);
+		}
 		else if(path === "/user/table_analysis"){
 			const id = searchParams.get("id");
 			const table_name = searchParams.get("table");
@@ -536,17 +650,106 @@ const handler = async (req: Request): Promise<Response> => {
 
 			const bloodTests = await BloodTestsCollection.find({user: new ObjectId(id)}).toArray();
 
-			const tablesTests: Table_analysis[] = [];
+			const tables: {
+				"date": string,
+				"table": Table_analysis
+			}[] = [];
 
 			bloodTests.forEach((test) => {
 				test.tables.forEach((table) => {
 					if(table.table_name === table_name){
-						tablesTests.push(table);
+						tables.push(
+							{
+								"date": test.date,
+								"table": table
+							}
+						);
 					}
 				});
 			});
 
-			//
+			const tables_transform: {
+				"date": string,
+				"table": Table_analysis_iterable
+			}[] = [];
+			
+			tables.forEach((table) => {
+				tables_transform.push({
+					"date": table.date,
+					"table": Transform_Table(table.table),
+				});
+			});
+
+			const datas: {
+				date: string,
+				data: string[],
+			}[] = [];
+
+			tables_transform.forEach((tables) => {
+				tables.table.data.forEach((data) => {
+					if(data[0] === data_name){
+						datas.push(
+							{
+								"date": tables.date,
+								"data": data,
+							}
+						);
+					}
+				});
+			});
+
+			const info: {
+				"Prueba": string,
+				"Valores": {
+					"Fecha": string,
+					"Valor": number
+				}[],
+				"Valor_minimo"?: number | null,
+				"Valor_maximo"?: number | null,
+				"Unidades": string,
+			} = {
+				"Prueba": datas[0].data[0],
+				"Valores": [],
+				"Unidades": datas[0].data[2],
+			}
+
+			datas.forEach((data) => {
+				info.Valores.push(
+					{
+						"Valor": Number(data.data[1]),
+						"Fecha": data.date,
+					}
+				);
+			});
+
+			const valor_split1 = datas[0].data[3].split(" - ");
+			const valor_split2 = datas[0].data[3].split("<");
+			const valor_split3 = datas[0].data[3].split(">");
+
+			if(valor_split1.length > 1){
+				info.Valor_minimo = Number(valor_split1[0]);
+				info.Valor_maximo = Number(valor_split1[1]);
+			}
+			else if(valor_split2.length > 1){
+				info.Valor_minimo = null;
+				info.Valor_maximo = Number(valor_split2[0]);
+			}
+			else if(valor_split3.length > 1){
+				info.Valor_minimo = Number(valor_split3[0]);
+				info.Valor_maximo = null;
+			}
+			else{
+				info.Valor_minimo = null;
+				info.Valor_maximo = null;
+			}
+
+			return new Response(
+				JSON.stringify(info),
+				{
+					status: 200,
+					headers: headers,
+				}
+			);
 		}
 	}
 	else if(method === "POST"){
