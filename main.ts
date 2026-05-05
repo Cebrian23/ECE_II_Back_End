@@ -723,8 +723,8 @@ const handler = async (req: Request): Promise<Response> => {
 			});
 
 			const valor_split1 = datas[0].data[3].split(" - ");
-			const valor_split2 = datas[0].data[3].split("<");
-			const valor_split3 = datas[0].data[3].split(">");
+			const valor_split2 = datas[0].data[3].split("< ");
+			const valor_split3 = datas[0].data[3].split("> ");
 
 			if(valor_split1.length > 1){
 				info.Valor_minimo = Number(valor_split1[0]);
@@ -732,16 +732,18 @@ const handler = async (req: Request): Promise<Response> => {
 			}
 			else if(valor_split2.length > 1){
 				info.Valor_minimo = null;
-				info.Valor_maximo = Number(valor_split2[0]);
+				info.Valor_maximo = Number(valor_split2[1]);
 			}
 			else if(valor_split3.length > 1){
-				info.Valor_minimo = Number(valor_split3[0]);
+				info.Valor_minimo = Number(valor_split3[1]);
 				info.Valor_maximo = null;
 			}
 			else{
 				info.Valor_minimo = null;
 				info.Valor_maximo = null;
 			}
+
+			console.log(info)
 
 			return new Response(
 				JSON.stringify(info),
