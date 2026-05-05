@@ -743,8 +743,6 @@ const handler = async (req: Request): Promise<Response> => {
 				info.Valor_maximo = null;
 			}
 
-			console.log(info)
-
 			return new Response(
 				JSON.stringify(info),
 				{
