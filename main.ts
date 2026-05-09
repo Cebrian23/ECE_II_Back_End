@@ -17,8 +17,8 @@ const handler = async (req: Request): Promise<Response> => {
 	const pathname = url.pathname;
   	const searchParams = url.searchParams;
 
-	const path = pathname.replace(/\/+$/, "");
-
+	//const path = pathname.replace(/\/+$/, "");
+	
 	const headers = new Headers();
 	headers.set("Access-Control-Allow-Origin", "*");
 	headers.set("Access-Control-Allow-Headers", "*");
@@ -31,7 +31,7 @@ const handler = async (req: Request): Promise<Response> => {
     	});
 	}
 	else if(method === "GET"){
-    	if(path === "/login"){
+    	if(pathname === "/login"){
 			const email = searchParams.get("email");
 			const password = searchParams.get("password");
 
@@ -77,7 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/id"){
+		else if(pathname === "/user/id"){
 			const id = searchParams.get("id");
 
 			if(!id){
@@ -122,7 +122,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/doctors"){
+		else if(pathname === "/user/doctors"){
 			const id = searchParams.get("id");
 
 			if(!id){
@@ -167,7 +167,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/appointments"){
+		else if(pathname === "/user/appointments"){
 			const id = searchParams.get("id");
 
 			if(!id){
@@ -222,7 +222,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/medications"){
+		else if(pathname === "/user/medications"){
 			const id = searchParams.get("id");
 
 			if(!id){
@@ -259,7 +259,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/medication"){
+		else if(pathname === "/user/medication"){
 			const id_user = searchParams.get("id_user");
 			const id_medic = searchParams.get("id_medic");
 
@@ -316,7 +316,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/all_analysis"){
+		else if(pathname === "/user/all_analysis"){
 			const id = searchParams.get("id");
 
 			if(!id){
@@ -381,7 +381,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/single_analysis"){
+		else if(pathname === "/user/single_analysis"){
 			const id_user = searchParams.get("id_user");
 			const id_analysis = searchParams.get("id_analysis");
 
@@ -461,7 +461,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/table_names_analysis"){
+		else if(pathname === "/user/table_names_analysis"){
 			const id = searchParams.get("id");
 
 			if(!id){
@@ -512,7 +512,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/table_data_names_analysis"){
+		else if(pathname === "/user/table_data_names_analysis"){
 			const id = searchParams.get("id");
 			const table_name = searchParams.get("table_name");
 
@@ -575,7 +575,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/table_analysis"){
+		else if(pathname === "/user/table_analysis"){
 			const id = searchParams.get("id");
 			const table_name = searchParams.get("table");
 
@@ -621,7 +621,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/parameter_table_analysis"){
+		else if(pathname === "/user/parameter_table_analysis"){
 			const id = searchParams.get("id");
 			const table_name = searchParams.get("table_name");
 			const data_name = searchParams.get("data_name");
@@ -753,7 +753,7 @@ const handler = async (req: Request): Promise<Response> => {
 		}
 	}
 	else if(method === "POST"){
-		if(path === "/user"){
+		if(pathname === "/user"){
 			const data = await req.json();
 			const name: string | undefined = data.name;
 			const surname_1: string | undefined = data.surname_1;
@@ -881,7 +881,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/appointments"){
+		else if(pathname === "/user/appointments"){
 			const data = await req.json();
 			const user: string | undefined = data.user;
 			const doctor: string | undefined = data.doctor;
@@ -965,7 +965,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/doctor"){
+		else if(pathname === "/user/doctor"){
 			const data = await req.json();
 			const id_user: string | undefined = data.id_user;
 			const name: string | undefined = data.name;
@@ -1090,7 +1090,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/new_medication"){
+		else if(pathname === "/user/new_medication"){
 			const data = await req.json();
 			const id: string | undefined = data.id;
 			const name: string | undefined = data.name;
@@ -1204,7 +1204,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/medication"){
+		else if(pathname === "/user/medication"){
 			const data = await req.json();
 			const id_user: string | undefined = data.id_user;
 			const id_medicine: string | undefined = data.id_medicine;
@@ -1308,7 +1308,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			);
 		}
-		else if(path === "/user/analysis"){
+		else if(pathname === "/user/analysis"){
 			const data = await req.json();
 			const doctor: string | undefined = data.doctor;
 			const tables: (Table_user_data | Table_analysis)[] | undefined = data.tables;
@@ -1427,7 +1427,7 @@ const handler = async (req: Request): Promise<Response> => {
 		}
 	}
 	else if(method === "PUT"){
-		if(path === "/user"){
+		if(pathname === "/user"){
 			const data = await req.json();
 			const id: string | undefined = data.id;
 			const name: string | undefined = data.name;
