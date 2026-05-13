@@ -17,6 +17,8 @@ export type Appointment = {
     hour: string,
     doctor: Doctor,
     user: User_Short,
+    hospital?: string,
+    ubication?: string,
     specialty: string,
     sector: "Publico" | "Privado" | string,
 }
