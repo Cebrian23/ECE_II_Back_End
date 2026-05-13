@@ -10,14 +10,13 @@ import { Med_infoDB } from "./types/Users/Medication.ts";
 import { Table_user_data, Table_analysis, Table_analysis_iterable } from "./types/Users/Table.ts";
 import { BloodTest_Date, Transform_BloodTest, Transform_Table } from "./utilities/Users/utils_BloodTest.ts";
 import { BloodTest, BloodTest_iterable } from "./types/Users/BloodTest.ts";
+import bcrypt from "bcrypt"
 
 const handler = async (req: Request): Promise<Response> => {
 	const method = req.method;
 	const url = new URL(req.url);
 	const pathname = url.pathname;
   	const searchParams = url.searchParams;
-
-	//const path = pathname.replace(/\/+$/, "");
 	
 	const headers = new Headers();
 	headers.set("Access-Control-Allow-Origin", "*");
@@ -59,7 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
 
 			const user = await UsersCollection.findOne({email: email});
 
-			if(!user || user.password !== password){
+			if(!user || await bcrypt.compare(password, user.password) === false){
 				return new Response(
 					JSON.stringify({error: "Email o contraseña no encontrada"}),
 					{
@@ -854,6 +853,8 @@ const handler = async (req: Request): Promise<Response> => {
                     phone_number = phone;
                 }
             }
+
+			const hash = await bcrypt.hash(password, 10);
             
 			const { insertedId } = await UsersCollection.insertOne(
 				{
@@ -862,7 +863,7 @@ const handler = async (req: Request): Promise<Response> => {
 					surname_2: surname_aux,
 					DNI: DNI,
 					email: email,
-					password: password,
+					password: hash,
 					doctors: [],
 					phone_prefix: phone_prefix,
 					phone_number: phone_number,
@@ -873,6 +874,7 @@ const handler = async (req: Request): Promise<Response> => {
 				JSON.stringify(
 					{
 						message: "Usuario correctamente insertado",
+						id: insertedId,
 					}
 				),
 				{
@@ -973,6 +975,8 @@ const handler = async (req: Request): Promise<Response> => {
 			const surname_2: string | undefined = data.surname_2;
 			const specialty: string | undefined = data.specialty;
 			const sector: string | undefined = data.sector;
+			const hospital: string | undefined = data.hospital;
+    		const ubication: string | undefined = data.ubication;
 			const prefix: string | undefined = data.prefix;
 			const phone: string | undefined= data.phone;
 
@@ -1031,6 +1035,22 @@ const handler = async (req: Request): Promise<Response> => {
                 }
             }
 
+			let centro: string | undefined = "";
+			if(hospital){
+				centro = hospital;
+			}
+			else{
+				centro = undefined;
+			}
+
+			let ubicacion: string | undefined = "";
+			if(ubication){
+				ubicacion = ubication;
+			}
+			else{
+				ubicacion = undefined;
+			}
+
 			const { insertedId } = await DoctorsCollection.insertOne(
 				{
 					name: name,
@@ -1038,6 +1058,8 @@ const handler = async (req: Request): Promise<Response> => {
 					surname_2: surname2,
 					specialty: specialty,
 					sector: sector,
+					hospital: centro,
+					ubication: ubicacion,
 					prefix: prefijo,
 					phone: numero,
 				}
@@ -1532,6 +1554,8 @@ const handler = async (req: Request): Promise<Response> => {
 				);
 			}
 
+			const hash = await bcrypt.hash(password, 10);
+
 			const { modifiedCount } = await UsersCollection.updateOne(
                 {_id: new ObjectId(id)},
                 {$set:
@@ -1539,7 +1563,7 @@ const handler = async (req: Request): Promise<Response> => {
                         name: name,
                         surname_1: surname_1,
                         surname_2: surname_2,
-						password: password,
+						password: hash,
                         phone_prefix: prefix,
                         phone_number: phone,
                     }
