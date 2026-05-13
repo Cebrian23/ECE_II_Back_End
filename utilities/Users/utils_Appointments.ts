@@ -2,7 +2,7 @@ import { ObjectId } from "npm:mongodb";
 import { DoctorsCollection, UsersCollection } from "../../db/conection.ts";
 import { AppointmentDB } from "../../types/Users/Appointment.ts";
 import { Short_User } from "./utils_Users.ts";
-import { Transform_Doctor } from "./utils_Doctors.ts";
+import { Short_Doctor } from "./utils_Doctors.ts";
 
 export const Transform_Appointment = async (appointment: AppointmentDB): Promise<Response> => {
     const doctorDB = await DoctorsCollection.findOne({_id: new ObjectId(appointment.doctor)});
@@ -31,8 +31,10 @@ export const Transform_Appointment = async (appointment: AppointmentDB): Promise
         JSON.stringify(
             {
                 id: appointment._id!.toString(),
-                doctor: Transform_Doctor(doctorDB),
+                doctor: Short_Doctor(doctorDB),
                 user: Short_User(userDB),
+                hospital: doctorDB.hospital,
+                ubication: doctorDB.ubication,
                 date: appointment.date,
                 hour: appointment.hour,
                 specialty: appointment.specialty,
