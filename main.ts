@@ -10,7 +10,8 @@ import { Med_infoDB } from "./types/Users/Medication.ts";
 import { Table_user_data, Table_analysis, Table_analysis_iterable } from "./types/Users/Table.ts";
 import { BloodTest_Date, Transform_BloodTest, Transform_Table } from "./utilities/Users/utils_BloodTest.ts";
 import { BloodTest, BloodTest_iterable } from "./types/Users/BloodTest.ts";
-import bcrypt from "bcrypt"
+import { Compare_Passwords, Decrypt_Passwords, Hash_Passwords } from "./utilities/Transforms/Transform_Passwords.ts";
+import { Decrypt_DNI } from "./utilities/Transforms/Transform_DNI.ts";
 
 const handler = async (req: Request): Promise<Response> => {
 	const method = req.method;
@@ -32,9 +33,9 @@ const handler = async (req: Request): Promise<Response> => {
 	else if(method === "GET"){
     	if(pathname === "/login"){
 			const email = searchParams.get("email");
-			const password = searchParams.get("password");
+			const passwordCript = searchParams.get("password");
 
-			if(!email || !password){
+			if(!email || !passwordCript){
                 return new Response(
                     JSON.stringify({error: "Email o contraseña no encontrada"}),
                     {
@@ -58,7 +59,9 @@ const handler = async (req: Request): Promise<Response> => {
 
 			const user = await UsersCollection.findOne({email: email});
 
-			if(!user || await bcrypt.compare(password, user.password) === false){
+			const password = Decrypt_Passwords(passwordCript.trim());
+
+			if(!user || await Compare_Passwords(password, user.password) === false){
 				return new Response(
 					JSON.stringify({error: "Email o contraseña no encontrada"}),
 					{
@@ -759,11 +762,11 @@ const handler = async (req: Request): Promise<Response> => {
 			const surname_2: string | undefined = data.surname_2;
 			const DNI: string | undefined = data.DNI;
 			const email: string | undefined = data.email;
-			const password: string | undefined = data.password;
+			const passwordCript: string | undefined = data.password;
 			const prefix: string | undefined = data.prefix;
 			const phone: string | undefined = data.phone;
 
-			if(!name || !surname_1 || !DNI || !email || !password){
+			if(!name || !surname_1 || !DNI || !email || !passwordCript){
 				return new Response(
 					JSON.stringify({error: "Faltan datos para insertar una persona"}),
 					{
@@ -854,7 +857,8 @@ const handler = async (req: Request): Promise<Response> => {
                 }
             }
 
-			const hash = await bcrypt.hash(password, 10);
+			const password = Decrypt_Passwords(passwordCript.trim());
+			const hash = await Hash_Passwords(password);
             
 			const { insertedId } = await UsersCollection.insertOne(
 				{
@@ -1372,7 +1376,7 @@ const handler = async (req: Request): Promise<Response> => {
 				);
 			}
 
-			if(user_data.dni.toUpperCase() !== DNI){
+			if(Decrypt_DNI(user_data.dni) !== Decrypt_DNI(DNI)){
 				return new Response(
 					JSON.stringify({error: "El DNI del usuario y el de la analítica no coincide"}),
 					{
@@ -1455,7 +1459,7 @@ const handler = async (req: Request): Promise<Response> => {
 			const name: string | undefined = data.name;
 			const surname_1: string | undefined = data.surname_1;
 			const surname_2: string | undefined = data.surname_2;
-			const password: string | undefined = data.password;
+			const passwordCript: string | undefined = data.password;
 			const prefix: string | undefined = data.phone_prefix;
 			const phone: string | undefined = data.phone_number;
 
@@ -1506,7 +1510,7 @@ const handler = async (req: Request): Promise<Response> => {
 				}
             }
 
-			if(password === undefined){
+			if(passwordCript === undefined){
 				const user = await UsersCollection.findOne({_id: new ObjectId(id)});
 
 				if(!user){
@@ -1554,7 +1558,8 @@ const handler = async (req: Request): Promise<Response> => {
 				);
 			}
 
-			const hash = await bcrypt.hash(password, 10);
+			const password = Decrypt_Passwords(passwordCript);
+			const hash = await Hash_Passwords(password);
 
 			const { modifiedCount } = await UsersCollection.updateOne(
                 {_id: new ObjectId(id)},
