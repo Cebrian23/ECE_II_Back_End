@@ -61,7 +61,7 @@ const handler = async (req: Request): Promise<Response> => {
 
 			const password = Decrypt_Passwords(passwordCript.trim());
 
-			if(!user || await Compare_Passwords(password, user.password) === false){
+			if(!user || password !== Decrypt_Passwords(user.password)){
 				return new Response(
 					JSON.stringify({error: "Email o contraseña no encontrada"}),
 					{
@@ -856,9 +856,6 @@ const handler = async (req: Request): Promise<Response> => {
                     phone_number = phone;
                 }
             }
-
-			const password = Decrypt_Passwords(passwordCript.trim());
-			const hash = await Hash_Passwords(password);
             
 			const { insertedId } = await UsersCollection.insertOne(
 				{
@@ -867,7 +864,7 @@ const handler = async (req: Request): Promise<Response> => {
 					surname_2: surname_aux,
 					DNI: DNI,
 					email: email,
-					password: hash,
+					password: passwordCript,
 					doctors: [],
 					phone_prefix: phone_prefix,
 					phone_number: phone_number,
@@ -1558,9 +1555,6 @@ const handler = async (req: Request): Promise<Response> => {
 				);
 			}
 
-			const password = Decrypt_Passwords(passwordCript);
-			const hash = await Hash_Passwords(password);
-
 			const { modifiedCount } = await UsersCollection.updateOne(
                 {_id: new ObjectId(id)},
                 {$set:
@@ -1568,7 +1562,7 @@ const handler = async (req: Request): Promise<Response> => {
                         name: name,
                         surname_1: surname_1,
                         surname_2: surname_2,
-						password: hash,
+						password: passwordCript,
                         phone_prefix: prefix,
                         phone_number: phone,
                     }
