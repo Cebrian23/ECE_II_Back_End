@@ -10,7 +10,7 @@ import { Med_infoDB } from "./types/Users/Medication.ts";
 import { Table_user_data, Table_analysis, Table_analysis_iterable } from "./types/Users/Table.ts";
 import { BloodTest_Date, Transform_BloodTest, Transform_Table } from "./utilities/Users/utils_BloodTest.ts";
 import { BloodTest, BloodTest_iterable } from "./types/Users/BloodTest.ts";
-import { Compare_Passwords, Decrypt_Passwords, Hash_Passwords } from "./utilities/Transforms/Transform_Passwords.ts";
+import { Decrypt_Passwords } from "./utilities/Transforms/Transform_Passwords.ts";
 import { Decrypt_DNI } from "./utilities/Transforms/Transform_DNI.ts";
 
 const handler = async (req: Request): Promise<Response> => {
