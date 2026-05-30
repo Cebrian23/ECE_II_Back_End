@@ -12,6 +12,8 @@ import { BloodTest_Date, Transform_BloodTest, Transform_Table } from "./utilitie
 import { BloodTest, BloodTest_iterable } from "./types/Users/BloodTest.ts";
 import { Decrypt_Passwords } from "./utilities/Transforms/Transform_Passwords.ts";
 import { Decrypt_DNI } from "./utilities/Transforms/Transform_DNI.ts";
+import { Appointment } from "./types/Users/Appointment.ts";
+import { Transform_Date } from "./utilities/Transforms/Transform_Date.ts";
 
 const handler = async (req: Request): Promise<Response> => {
 	const method = req.method;
@@ -216,8 +218,12 @@ const handler = async (req: Request): Promise<Response> => {
 			
 			const appointments = await Promise.all(appointments_trans.map(async(response) => await response.json()));
 
+			const appointmentsSorted: Appointment[] = appointments.sort((appointmentA: Appointment, appointmentB: Appointment) => {
+				return new Date(`${appointmentA.date}T${appointmentA.hour}Z`).getTime() - new Date(`${appointmentB.date}T${appointmentB.hour}Z`).getTime();
+			});
+
 			return new Response(
-				JSON.stringify(appointments),
+				JSON.stringify(appointmentsSorted),
 				{
 					status: 200,
 					headers: headers,
@@ -375,8 +381,12 @@ const handler = async (req: Request): Promise<Response> => {
 				}
 			});
 
+			const allAnalysisSorted: BloodTest_iterable[] = all_analysis_transform.sort((BloodTestA: BloodTest_iterable, BloodTestB: BloodTest_iterable) => {
+				return new Date(BloodTestA.date).getTime() - new Date(BloodTestB.date).getTime();
+			});
+
 			return new Response(
-				JSON.stringify(all_analysis_transform),
+				JSON.stringify(allAnalysisSorted),
 				{
 					status: 200,
 					headers: headers,
@@ -715,7 +725,14 @@ const handler = async (req: Request): Promise<Response> => {
 				"Unidades": datas[0].data[2],
 			}
 
-			datas.forEach((data) => {
+			const datasSorted: {
+				date: string,
+				data: string[],
+			}[] = datas.sort((dataA, dataB) => {
+				return (new Date(Transform_Date(dataA.date)).getTime() - new Date(Transform_Date(dataB.date)).getTime());
+			});
+
+			datasSorted.forEach((data) => {
 				info.Valores.push(
 					{
 						"Valor": Number(data.data[1]),
