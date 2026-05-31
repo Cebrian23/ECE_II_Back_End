@@ -14,6 +14,7 @@ import { Decrypt_Passwords } from "./utilities/Transforms/Transform_Passwords.ts
 import { Decrypt_DNI } from "./utilities/Transforms/Transform_DNI.ts";
 import { Appointment } from "./types/Users/Appointment.ts";
 import { Transform_Date } from "./utilities/Transforms/Transform_Date.ts";
+import { Validate_DNI } from "./utilities/Validations/Validate_DNI.ts";
 
 const handler = async (req: Request): Promise<Response> => {
 	const method = req.method;
@@ -801,7 +802,40 @@ const handler = async (req: Request): Promise<Response> => {
 				surname_aux = undefined;
 			}
 
-			const users_DNI = await UsersCollection.findOne({DNI: DNI});
+			console.log(DNI);
+			console.log(Decrypt_DNI(DNI));
+
+			const dni_data = Validate_DNI(Decrypt_DNI(DNI));
+
+			if(dni_data.status !== 200){
+				return new Response(
+					JSON.stringify(await dni_data.json()),
+					{
+						status: dni_data.status,
+						headers: headers,
+					}
+				)
+			}
+
+			const users = await UsersCollection.find().toArray();
+
+			const user_DNI = users.find((user) => {
+				if(Decrypt_DNI(DNI) === Decrypt_DNI(user.DNI)){
+					return user;
+				}
+			});
+
+			if(user_DNI !== undefined){
+				return new Response(
+					JSON.stringify({error: `Persona con DNI ${Decrypt_DNI(DNI)} ya existente`}),
+					{
+						status: 406,
+						headers: headers,
+					}
+				);
+			}
+
+			/*const users_DNI = await UsersCollection.findOne({DNI: DNI});
 
 			if(users_DNI){
 				return new Response(
@@ -811,7 +845,7 @@ const handler = async (req: Request): Promise<Response> => {
 						headers: headers,
 					}
 				);
-			}
+			}*/
 
 			const users_email = await UsersCollection.findOne({email: email});
 
@@ -873,7 +907,9 @@ const handler = async (req: Request): Promise<Response> => {
                     phone_number = phone;
                 }
             }
-            
+			
+			console.log(DNI);
+
 			const { insertedId } = await UsersCollection.insertOne(
 				{
 					name: name,
@@ -1364,9 +1400,15 @@ const handler = async (req: Request): Promise<Response> => {
 				);
 			}
 
-			const user_exists = await UsersCollection.findOne({DNI: DNI});
+			const users = await UsersCollection.find().toArray();
 
-			if(!user_exists){
+			const user_exists = users.find((user) => {
+				if(Decrypt_DNI(user.DNI) === Decrypt_DNI(DNI)){
+					return user;
+				}
+			});
+
+			if(user_exists === undefined){
 				JSON.stringify({error: "Paciente no encontrado"}),
 				{
 					status: 404,
