@@ -802,9 +802,6 @@ const handler = async (req: Request): Promise<Response> => {
 				surname_aux = undefined;
 			}
 
-			console.log(DNI);
-			console.log(Decrypt_DNI(DNI));
-
 			const dni_data = Validate_DNI(Decrypt_DNI(DNI));
 
 			if(dni_data.status !== 200){
@@ -907,8 +904,6 @@ const handler = async (req: Request): Promise<Response> => {
                     phone_number = phone;
                 }
             }
-			
-			console.log(DNI);
 
 			const { insertedId } = await UsersCollection.insertOne(
 				{
